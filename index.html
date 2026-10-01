@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduCard Market — ตลาดการ์ดความรู้</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['"Prompt"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
+      colors: {
+        night: { 950:'#0b0d17', 900:'#111425', 800:'#1a1e33', 700:'#252a45', 600:'#323860' },
+      },
+      boxShadow: {
+        glow: '0 0 40px -8px rgba(139,92,246,.4)',
+        card: '0 10px 30px -10px rgba(0,0,0,.7)',
+      }
+    }
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Prompt', sans-serif; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #111425; }
+  ::-webkit-scrollbar-thumb { background: #323860; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: #454c78; }
+
+  .card-hover { transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s; }
+  .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 40px -12px rgba(0,0,0,.8), 0 0 30px -10px rgba(139,92,246,.3); }
+  .card-hover:hover .card-img { transform: scale(1.06); }
+  .card-img { transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+
+  .fade-in { animation: fadeIn .3s ease both; }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(12px);} to { opacity:1; transform:none;} }
+
+  .modal-pop { animation: pop .35s cubic-bezier(.2,.9,.3,1.2) both; }
+  @keyframes pop { from { opacity:0; transform: scale(.92) translateY(16px);} to { opacity:1; transform:none;} }
+
+  .toast-in { animation: toastIn .3s ease both; }
+  @keyframes toastIn { from { opacity:0; transform: translateY(20px);} to { opacity:1; transform:none;} }
+
+  .holo {
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.12) 45%, rgba(255,255,255,.02) 55%, transparent 70%);
+    background-size: 250% 250%;
+    animation: holoShift 4s ease-in-out infinite;
+  }
+  @keyframes holoShift { 0%,100% { background-position: 0% 0%; } 50% { background-position: 100% 100%; } }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+</head>
+<body class="bg-night-950 text-slate-200 min-h-screen antialiased">
+
+<!-- ============ HEADER ============ -->
+<header class="sticky top-0 z-40 backdrop-blur-xl bg-night-950/80 border-b border-white/5">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="flex items-center gap-3 sm:gap-6 h-16">
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2.5 shrink-0 group">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-400 to-indigo-600 flex items-center justify-center shadow-glow group-hover:rotate-6 transition-transform">
+          <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>
+        </div>
+        <div class="leading-tight">
+          <span class="font-extrabold text-lg text-white tracking-tight">Edu<span class="text-violet-400">Card</span> <span class="text-slate-400 font-semibold text-sm">Market</span></span>
+          <p class="text-[10px] text-slate-500 -mt-0.5 hidden sm:block">ตลาดการ์ดความรู้</p>
+        </div>
+      </a>
+
+      <!-- Search -->
+      <div class="flex-1 max-w-xl relative">
+        <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="searchInput" type="text" placeholder="ค้นหาการ์ด เช่น ตารางธาตุ, คำศัพท์, สูตรฟิสิกส์..."
+          class="w-full bg-night-800 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm placeholder:text-slate-500 focus:outline-none focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20 transition">
+      </div>
+
+      <!-- Admin button -->
+      <button onclick="openAdmin()" class="shrink-0 flex items-center gap-2 bg-gradient-to-r from-violet-500 to-indigo-500 hover:brightness-110 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-white transition shadow-glow">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        <span class="hidden sm:inline">ลงการ์ดใหม่</span>
+      </button>
+    </div>
+
+    <!-- Category pills -->
+    <nav id="categoryNav" class="flex gap-2 overflow-x-auto no-scrollbar pb-3 -mx-1 px-1"></nav>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
+  <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-night-800 via-night-900 to-indigo-950 border border-white/5 p-6 sm:p-8">
+    <div class="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-violet-500/20 blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-16 w-64 h-64 rounded-full bg-indigo-500/15 blur-3xl pointer-events-none"></div>
+    <div class="relative flex flex-col sm:flex-row sm:items-center gap-6">
+      <div class="flex-1">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-violet-500/15 text-violet-300 border border-violet-400/20 mb-3">
+          🎓 Peer-to-Peer Learning
+        </span>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+          ตลาดแลกเปลี่ยน <span class="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 to-indigo-300">การ์ดความรู้</span>
+        </h1>
+        <p class="text-sm text-slate-400 mt-2 max-w-xl leading-relaxed">
+          การ์ดสรุปบทเรียนที่นักศึกษาและอาจารย์ออกแบบสร้างขึ้นเอง — ออกแบบ สรุปใจความ แล้วแบ่งปันให้เพื่อนร่วมชั้นได้เรียนรู้ด้วยกัน
+        </p>
+      </div>
+      <div class="flex gap-6 sm:gap-8 shrink-0">
+        <div class="text-center">
+          <p id="statTotal" class="text-2xl sm:text-3xl font-extrabold text-white">0</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">การ์ดในตลาด</p>
+        </div>
+        <div class="text-center">
+          <p id="statFree" class="text-2xl sm:text-3xl font-extrabold text-emerald-400">0</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">การ์ดฟรี</p>
+        </div>
+        <div class="text-center">
+          <p id="statCreators" class="text-2xl sm:text-3xl font-extrabold text-violet-300">0</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">ผู้สร้าง</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MAIN ============ -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+  <div class="flex gap-6 items-start">
+
+    <!-- ===== Sidebar Filters (desktop) ===== -->
+    <aside class="hidden lg:block w-64 shrink-0 sticky top-28 space-y-5">
+      <div class="bg-night-900 border border-white/5 rounded-2xl p-5 shadow-card">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-white text-sm">ตัวกรอง</h3>
+          <button onclick="resetFilters()" class="text-xs text-violet-300 hover:text-violet-200 transition">ล้างทั้งหมด</button>
+        </div>
+
+        <!-- Grade level -->
+        <div class="mb-5">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">ระดับชั้น</p>
+          <div id="gradeFilters" class="space-y-1.5"></div>
+        </div>
+
+        <!-- Card type -->
+        <div class="mb-5">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">ประเภทการ์ด</p>
+          <div id="typeFilters" class="space-y-1.5"></div>
+        </div>
+
+        <!-- Free only -->
+        <label class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-night-800 transition text-sm text-slate-300 border border-white/5">
+          <input type="checkbox" id="freeOnly" onchange="state.freeOnly = this.checked; render()" class="accent-emerald-400 w-4 h-4">
+          <span class="flex items-center gap-1.5">การ์ด<span class="text-emerald-400 font-semibold">ฟรี</span>เท่านั้น</span>
+        </label>
+      </div>
+
+      <!-- CTA -->
+      <div class="bg-gradient-to-br from-violet-600/20 to-indigo-600/10 border border-violet-400/20 rounded-2xl p-5">
+        <p class="text-sm font-bold text-white mb-1">🎨 อยารลงการ์ดของคุณ?</p>
+        <p class="text-xs text-slate-400 leading-relaxed mb-3">สรุปเนื้อหาที่เก่ง ออกแบบการ์ดความรู้ แล้วแบ่งปันให้เพื่อนร่วมชั้นได้เรียนรู้ไปด้วยกัน</p>
+        <button onclick="openAdmin()" class="w-full bg-violet-500 hover:bg-violet-400 text-white text-xs font-bold rounded-xl py-2.5 transition">เริ่มสร้างการ์ดเลย</button>
+      </div>
+    </aside>
+
+    <!-- ===== Content ===== -->
+    <section class="flex-1 min-w-0">
+      <!-- Mobile filter bar -->
+      <div class="lg:hidden flex gap-2 mb-4">
+        <select id="mobileGrade" onchange="state.grade = this.value; render()" class="flex-1 bg-night-800 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-400/60">
+          <option value="">ทุกระดับชั้น</option>
+        </select>
+        <select id="mobileType" onchange="state.type = this.value; render()" class="flex-1 bg-night-800 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-400/60">
+          <option value="">ทุกประเภท</option>
+        </select>
+        <button onclick="resetFilters()" class="bg-night-800 border border-white/10 rounded-xl px-3.5 text-sm text-slate-400 hover:text-violet-300 transition">ล้าง</button>
+      </div>
+
+      <!-- Result meta -->
+      <div class="flex items-center justify-between mb-4">
+        <p class="text-sm text-slate-400">พบ <span id="resultCount" class="text-violet-300 font-semibold">0</span> การ์ด</p>
+        <select id="sortSelect" onchange="state.sort = this.value; render()" class="bg-night-800 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-violet-400/60">
+          <option value="default">เรียง: แนะนำ</option>
+          <option value="price-asc">ราคา: ต่ำ → สูง</option>
+          <option value="price-desc">ราคา: สูง → ต่ำ</option>
+          <option value="name">ชื่อ ก–ฮ</option>
+        </select>
+      </div>
+
+      <!-- Grid -->
+      <div id="cardGrid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+
+      <!-- Empty state -->
+      <div id="emptyState" class="hidden text-center py-20">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-night-800 flex items-center justify-center">
+          <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 6.25 10.5 3h3L12 6.25zM6 10.5 3.25 12 6 13.5 7.5 10.5zM18 10.5 16.5 13.5 19.75 12 18 10.5zM12 13.5 10.5 21h3L12 13.5z"/></svg>
+        </div>
+        <p class="text-slate-400 font-medium">ไม่พบการ์ดที่ค้นหา</p>
+        <p class="text-slate-600 text-sm mt-1">ลองเปลี่ยนคำค้นหาหรือตัวกรองดูนะ</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<!-- ============ CARD DETAIL MODAL ============ -->
+<div id="detailModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeDetail()"></div>
+  <div class="modal-pop relative bg-night-900 border border-white/10 rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+    <button onclick="closeDetail()" class="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-night-800/90 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-violet-400/50 transition">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div id="detailContent" class="grid md:grid-cols-2"></div>
+  </div>
+</div>
+
+<!-- ============ ADMIN MODAL ============ -->
+<div id="adminModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeAdmin()"></div>
+  <div class="modal-pop relative bg-night-900 border border-white/10 rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div class="p-6 border-b border-white/5 flex items-center justify-between sticky top-0 bg-night-900/95 backdrop-blur z-10">
+      <div>
+        <h2 class="text-lg font-bold text-white">🎨 ลงการ์ดความรู้ใหม่</h2>
+        <p class="text-xs text-slate-500">ออกแบบการ์ดสรุบทเรียนของคุณ แล้วแบ่งปันให้ทุกคน</p>
+      </div>
+      <button onclick="closeAdmin()" class="w-9 h-9 rounded-full bg-night-800 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="adminForm" class="p-6 space-y-4" onsubmit="saveCard(event)">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">ชื่อการ์ด *</label>
+          <input name="name" required placeholder="เช่น ตารางธาตุฉบับจำง่าย" class="w-full bg-night-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20 transition">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">วิชา *</label>
+          <select name="subject" required class="w-full bg-night-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400/60">
+            <option>วิทยาศาสตร์</option><option>คณิตศาสตร์</option><option>ภาษาอังกฤษ</option><option>ประวัติศาสตร์</option><option>ภูมิศาสตร์</option><option>ชีววิทยา</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">ระดับชั้น *</label>
+          <select name="grade" required class="w-full bg-night-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400/60">
+            <option>ป.1–3</option><option>ป.4–6</option><option>ม.1–3</option><option>ม.4–6</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">ประเภทการ์ด *</label>
+          <select name="type" required class="w-full bg-night-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400/60">
+            <option>สรุปบทเรียน</option><option>คำศัพท์</option><option>สูตร/ตาราง</option><option>ไทม์ไลน์</option><option>คำถามท้ายบท</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">ชื่อผู้สร้าง *</label>
+          <input name="creator" required placeholder="เช่น น้องมินตรา (ม.2)" class="w-full bg-night-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20 transition">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">จำนวนหน้า / ใบ</label>
+          <input name="pages" type="number" min="1" value="20" class="w-full bg-night-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20 transition">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">ราคา (บาท) — ใส่ 0 ถ้าแจกฟรี</label>
+          <input name="price" type="number" min="0" value="0" class="w-full bg-night-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20 transition">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">สต็อก (ชุด)</label>
+          <input name="stock" type="number" min="0" value="10" class="w-full bg-night-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20 transition">
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">รูปภาพ (URL — ถ้าไม่ใส่จะสร้างอัตโนมัติ)</label>
+          <input name="image" placeholder="https://..." class="w-full bg-night-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20 transition">
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-semibold text-slate-400 mb-1.5">จุดประสงค์การเรียนรู้ / คำอธิบาย</label>
+          <textarea name="desc" rows="2" placeholder="เช่น ช่วยให้จำสัญลักษณ์ธาตุได้ง่าย พร้อมตัวอย่างใช้งานในชีวิตประจำวัน" class="w-full bg-night-800 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-400/60 focus:ring-2 focus:ring-violet-400/20 transition resize-none"></textarea>
+        </div>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="closeAdmin()" class="flex-1 bg-night-800 border border-white/10 rounded-xl py-3 text-sm font-medium text-slate-300 hover:bg-night-700 transition">ยกเลิก</button>
+        <button type="submit" class="flex-1 bg-gradient-to-r from-violet-500 to-indigo-500 text-white rounded-xl py-3 text-sm font-bold hover:brightness-110 transition shadow-glow">ลงการ์ดเลย</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] bg-night-800 border border-violet-400/30 rounded-2xl px-5 py-3.5 shadow-2xl flex items-center gap-3">
+  <svg class="w-5 h-5 text-violet-300 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+  <p id="toastMsg" class="text-sm font-medium text-white"></p>
+</div>
+
+<script>
+/* ================= DATA ================= */
+const SUBJECTS = ['วิทยาศาสตร์', 'คณิตศาสตร์', 'ภาษาอังกฤษ', 'ประวัติศาสตร์', 'ภูมิศาสตร์', 'ชีววิทยา'];
+const GRADES = ['ป.1–3', 'ป.4–6', 'ม.1–3', 'ม.4–6'];
+const TYPES = ['สรุปบทเรียน', 'คำศัพท์', 'สูตร/ตาราง', 'ไทม์ไลน์', 'คำถามท้ายบท'];
+const LINE_ID = '@educard'; // ← เปลี่ยนเป็น Line ID ของร้านคุณ
+
+const SUBJECT_GRADIENT = {
+  'วิทยาศาสตร์':   ['#06b6d4','#3b82f6'],
+  'คณิตศาสตร์':   ['#8b5cf6','#6366f1'],
+  'ภาษาอังกฤษ':   ['#10b981','#059669'],
+  'ประวัติศาสตร์': ['#f59e0b','#ef4444'],
+  'ภูมิศาสตร์':   ['#22c55e','#14b8a6'],
+  'ชีววิทยา':     ['#ec4899','#8b5cf6'],
+};
+const SUBJECT_EMOJI = { 'วิทยาศาสตร์':'🔬','คณิตศาสตร์':'➗','ภาษาอังกฤษ':'🔤','ประวัติศาสตร์':'🏛️','ภูมิศาสตร์':'🌍','ชีววิทยา':'🧬' };
+
+const TYPE_STYLE = {
+  'สรุปบทเรียน':  { dot:'bg-blue-400',    text:'text-blue-300' },
+  'คำศัพท์':      { dot:'bg-emerald-400', text:'text-emerald-300' },
+  'สูตร/ตาราง':  { dot:'bg-amber-400',   text:'text-amber-300' },
+  'ไทม์ไลน์':     { dot:'bg-pink-400',    text:'text-pink-300' },
+  'คำถามท้ายบท': { dot:'bg-violet-400',  text:'text-violet-300' },
+};
+
+const SEED_CARDS = [
+  { id:1,  name:'ตารางธาตุฉบับจำง่าย',        subject:'วิทยาศาสตร์',   grade:'ม.1–3', type:'สูตร/ตาราง',  creator:'น้องมินตรา (ม.2)',  pages:48, price:49,  stock:15,  desc:'สัญลักษณ์ธาตุครบ 118 ตัว จัดกลุ่มตามสี พร้อมเทคนิคจำง่าย' },
+  { id:2,  name:'คำศัพท์ TOEIC 800 คำ',       subject:'ภาษาอังกฤษ',   grade:'ม.4–6', type:'คำศัพท์',      creator:'ครูเปี๊ยก',            pages:120, price:99,  stock:8,   desc:'คำศัพท์ธุรกิจครบถ้วน พร้อมตัวอย่างประโยคและเสียงอ่าน' },
+  { id:3,  name:'สูตรฟิสิกส์ ม.2 ฉบับสรุป',    subject:'วิทยาศาสตร์',   grade:'ม.1–3', type:'สูตร/ตาราง',  creator:'น้องฟิล์ม (ม.2)',     pages:36, price:39,  stock:20,  desc:'สูตรฟิสิกส์ครบทุกบท พร้อมวิธีใช้สูตรและตัวอย่างโจทย์' },
+  { id:4,  name:'ไทม์ไลน์ประวัติศาสตร์ไทย',    subject:'ประวัติศาสตร์', grade:'ม.1–3', type:'ไทม์ไลน์',     creator:'น้องอารี (ม.3)',     pages:24, price:59,  stock:5,   desc:'ตั้งแต่สุโขทัยถึงรัชกาลที่ 10 จัดเรียงตามยุคสมัย จำง่ายไม่สับสน' },
+  { id:5,  name:'สรุบบทเรียน แรงและการเคลื่อนที่', subject:'วิทยาศาสตร์', grade:'ม.1–3', type:'สรุปบทเรียน',  creator:'ครูแพรว',             pages:18, price:0,   stock:999, desc:'สรุปเนื้อหาการเคลื่อนที่ ความเร็ว แรงโน้มถ่วง ฉบับเข้าใจง่าย' },
+  { id:6,  name:'สูตรอนุพันธ์เบื้องต้น',        subject:'คณิตศาสตร์',   grade:'ม.4–6', type:'สูตร/ตาราง',  creator:'น้องเจ (ม.5)',       pages:28, price:45,  stock:12,  desc:'กฎอนุพันธ์ครบถ้วน พร้อมเทคนิคแก้โจทย์แต่ละแบบ' },
+  { id:7,  name:'คำศัพท์อังกฤษ ป.4–6 ฉบับรูปภาพ', subject:'ภาษาอังกฤษ',  grade:'ป.4–6', type:'คำศัพท์',      creator:'น้องบี (ป.6)',       pages:60, price:29,  stock:30,  desc:'คำศัพท์พร้อมภาพประกอบ จำไว จำทันที เหมาะสำหรับเด็กประถมปลาย' },
+  { id:8,  name:'ชีววิทยา ระบบของสิ่งมีชีวิต',  subject:'ชีววิทยา',     grade:'ม.1–3', type:'สรุปบทเรียน',  creator:'น้องมอส (ม.2)',     pages:22, price:35,  stock:10,  desc:'สรุประบบย่อยอาหาร ระบบหายใจ ระบบไหลเวียนเลือด พร้อมแผนภาพ' },
+  { id:9,  name:'ภูมิศาสตร์ไทย ภูมิประเทศ',     subject:'ภูมิศาสตร์',   grade:'ป.4–6', type:'สรุปบทเรียน',  creator:'ครูลุง',              pages:16, price:0,   stock:999, desc:'ภูมิประเทศ 5 ภาคของไทย และสภาพอากาศแบบเข้าใจง่าย' },
+  { id:10, name:'คำถามท้ายบท ประวัติศาสตร์โลก', subject:'ประวัติศาสตร์', grade:'ม.4–6', type:'คำถามท้ายบท', creator:'น้องโนว์ (ม.4)',   pages:40, price:25,  stock:25,  desc:'โจทย์สอบประวัติศาสตร์โลก 40 ข้อ พร้อมเฉลยละเอียด' },
+  { id:11, name:'สูตรเศษส่วนและทศนิยม',        subject:'คณิตศาสตร์',   grade:'ป.4–6', type:'สูตร/ตาราง',  creator:'น้องแพร (ป.5)',     pages:20, price:19,  stock:40,  desc:'เศษส่วน ทศนิยม ร้อยละ เปรียบเทียบและเรียงลำดับ ฉบับสรุปสั้น' },
+  { id:12, name:'โลกและอวกาศ ฉบับสนุก',       subject:'วิทยาศาสตร์',   grade:'ป.4–6', type:'สรุปบทเรียน',  creator:'น้องต้น (ป.6)',     pages:14, price:0,   stock:999, desc:'ดาวเคราะห์ 8 ดวง ปรากฏการณ์ทางอวกาศ สรุปแบบสนุก ไม่น่าเบื่อ' },
+];
+
+/* ================= STATE ================= */
+let cards = loadCards();
+const state = { subject:'', grade:'', type:'', search:'', sort:'default', freeOnly:false };
+
+function loadCards() {
+  try {
+    const saved = localStorage.getItem('educard_custom');
+    const custom = saved ? JSON.parse(saved) : [];
+    return [...SEED_CARDS, ...custom];
+  } catch { return [...SEED_CARDS]; }
+}
+function saveCustomCards(custom) {
+  localStorage.setItem('educard_custom', JSON.stringify(custom));
+}
+
+/* ================= HELPERS ================= */
+function cardImage(card) {
+  if (card.image) return card.image;
+  const [c1, c2] = SUBJECT_GRADIENT[card.subject] || ['#6366f1','#a855f7'];
+  const emoji = SUBJECT_EMOJI[card.subject] || '📚';
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='560'>
+    <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+      <stop offset='0' stop-color='${c1}'/><stop offset='1' stop-color='${c2}'/>
+    </linearGradient></defs>
+    <rect width='400' height='560' fill='url(#g)'/>
+    <rect x='14' y='14' width='372' height='532' rx='18' fill='rgba(0,0,0,.28)'/>
+    <rect x='14' y='14' width='372' height='532' rx='18' fill='none' stroke='rgba(255,255,255,.25)' stroke-width='2'/>
+    <text x='200' y='245' font-size='100' text-anchor='middle'>${emoji}</text>
+    <text x='200' y='325' font-size='21' font-family='sans-serif' font-weight='bold' fill='rgba(255,255,255,.95)' text-anchor='middle'>${card.name.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</text>
+    <text x='200' y='495' font-size='14' font-family='sans-serif' fill='rgba(255,255,255,.6)' text-anchor='middle'>${card.subject} · ${card.grade}</text>
+  </svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+
+const fmtPrice = n => Number(n) === 0 ? 'ฟรี' : '฿' + Number(n).toLocaleString('th-TH');
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+/* ================= RENDER ================= */
+function renderCategories() {
+  const all = [{ key:'', label:'ทั้งหมด', emoji:'✨' }, ...SUBJECTS.map(s => ({ key:s, label:s, emoji:SUBJECT_EMOJI[s] }))];
+  document.getElementById('categoryNav').innerHTML = all.map(c =>
+    `<button onclick="setSubject('${c.key}')"
+      class="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border transition
+      ${state.subject === c.key
+        ? 'bg-violet-500 text-white border-violet-400 shadow-glow'
+        : 'bg-night-800 text-slate-300 border-white/10 hover:border-violet-400/40 hover:text-white'}">
+      <span>${c.emoji}</span>${c.label}
+    </button>`).join('');
+}
+
+function renderFilterGroups() {
+  document.getElementById('gradeFilters').innerHTML = GRADES.map(g =>
+    `<label class="flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer hover:bg-night-800 transition text-sm
+      ${state.grade===g ? 'bg-night-800 text-violet-300' : 'text-slate-400'}">
+      <input type="radio" name="grade" class="accent-violet-400" ${state.grade===g?'checked':''} onchange="setGrade('${g}')">
+      ${g}
+    </label>`).join('');
+
+  document.getElementById('typeFilters').innerHTML = TYPES.map(t => {
+    const s = TYPE_STYLE[t];
+    return `<label class="flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer hover:bg-night-800 transition text-sm
+      ${state.type===t ? 'bg-night-800 ' + s.text : 'text-slate-400'}">
+      <input type="radio" name="type" class="accent-violet-400" ${state.type===t?'checked':''} onchange="setType('${t}')">
+      <span class="w-2 h-2 rounded-full ${s.dot}"></span>${t}
+    </label>`;
+  }).join('');
+
+  // Mobile selects
+  const mg = document.getElementById('mobileGrade');
+  const mt = document.getElementById('mobileType');
+  mg.innerHTML = '<option value="">ทุกระดับชั้น</option>' + GRADES.map(g=>`<option ${state.grade===g?'selected':''}>${g}</option>`).join('');
+  mt.innerHTML = '<option value="">ทุกประเภท</option>' + TYPES.map(t=>`<option ${state.type===t?'selected':''}>${t}</option>`).join('');
+}
+
+function getFiltered() {
+  let list = cards.filter(c =>
+    (!state.subject  || c.subject  === state.subject) &&
+    (!state.grade    || c.grade    === state.grade) &&
+    (!state.type     || c.type     === state.type) &&
+    (!state.freeOnly || Number(c.price) === 0) &&
+    (!state.search    || (c.name + ' ' + c.desc + ' ' + c.creator).toLowerCase().includes(state.search.toLowerCase()))
+  );
+  if (state.sort === 'price-asc')  list.sort((a,b)=>a.price-b.price);
+  if (state.sort === 'price-desc') list.sort((a,b)=>b.price-a.price);
+  if (state.sort === 'name')       list.sort((a,b)=>a.name.localeCompare(b.name,'th'));
+  return list;
+}
+
+function render() {
+  renderCategories();
+  renderFilterGroups();
+
+  const list = getFiltered();
+  const grid = document.getElementById('cardGrid');
+  document.getElementById('resultCount').textContent = list.length;
+  document.getElementById('statTotal').textContent = cards.length;
+  document.getElementById('statFree').textContent = cards.filter(c => Number(c.price) === 0).length;
+  document.getElementById('statCreators').textContent = new Set(cards.map(c => c.creator)).size;
+  document.getElementById('emptyState').classList.toggle('hidden', list.length > 0);
+
+  grid.innerHTML = list.map((c, i) => {
+    const ts = TYPE_STYLE[c.type];
+    const free = Number(c.price) === 0;
+    const out = c.stock <= 0;
+    return `
+    <article class="card-hover fade-in bg-night-900 border border-white/5 rounded-2xl overflow-hidden cursor-pointer"
+             style="animation-delay:${Math.min(i*40, 400)}ms" onclick="openDetail(${c.id})">
+      <div class="relative aspect-[5/7] overflow-hidden bg-night-800">
+        <img src="${cardImage(c)}" alt="${esc(c.name)}" loading="lazy" class="card-img w-full h-full object-cover">
+        <div class="holo absolute inset-0 pointer-events-none"></div>
+        <span class="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-black/60 backdrop-blur border border-white/10 ${ts.text}">${c.type}</span>
+        ${free
+          ? '<span class="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/90 text-white">ฟรี</span>'
+          : `<span class="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-black/60 backdrop-blur border border-white/10 text-slate-300">คงเหลือ ${c.stock}</span>`}
+      </div>
+      <div class="p-3.5">
+        <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">${c.subject} · ${c.grade}</p>
+        <h3 class="font-semibold text-white text-sm leading-snug truncate">${esc(c.name)}</h3>
+        <p class="text-[11px] text-slate-500 mt-1 truncate">โดย ${esc(c.creator)}</p>
+        <div class="flex items-center justify-between mt-3">
+          <p class="font-bold text-base ${free ? 'text-emerald-400' : 'text-amber-300'}">${fmtPrice(c.price)}</p>
+          <button class="text-xs font-medium px-3 py-1.5 rounded-lg bg-night-800 border border-white/10 text-slate-300 hover:border-violet-400/50 hover:text-violet-300 transition">ดูรายละเอียด</button>
+        </div>
+      </div>
+    </article>`;
+  }).join('');
+}
+
+/* ================= ACTIONS ================= */
+function setSubject(s)  { state.subject  = s; render(); }
+function setGrade(g)    { state.grade    = state.grade === g ? '' : g; render(); }
+function setType(t)     { state.type     = state.type === t ? '' : t; render(); }
+function resetFilters() {
+  state.subject=''; state.grade=''; state.type=''; state.search=''; state.sort='default'; state.freeOnly=false;
+  document.getElementById('searchInput').value='';
+  document.getElementById('sortSelect').value='default';
+  document.getElementById('freeOnly').checked=false;
+  render();
+}
+
+document.getElementById('searchInput').addEventListener('input', e => { state.search = e.target.value.trim(); render(); });
+
+/* ================= DETAIL MODAL ================= */
+function openDetail(id) {
+  const c = cards.find(x => x.id === id);
+  if (!c) return;
+  const ts = TYPE_STYLE[c.type];
+  const free = Number(c.price) === 0;
+  const out = c.stock <= 0;
+  const initial = esc((c.creator || 'นักศึกษา').trim().charAt(0));
+  document.getElementById('detailContent').innerHTML = `
+    <div class="relative bg-night-800">
+      <img src="${cardImage(c)}" alt="${esc(c.name)}" class="w-full h-full object-cover max-h-[50vh] md:max-h-none">
+      <div class="holo absolute inset-0 pointer-events-none"></div>
+    </div>
+    <div class="p-6 md:p-8 flex flex-col">
+      <p class="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-1.5">${c.subject} · ${c.grade}</p>
+      <h2 class="text-2xl font-extrabold text-white leading-tight">${esc(c.name)}</h2>
+      <div class="flex items-center gap-2 mt-3">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-night-800 border border-white/10 ${ts.text}">
+          <span class="w-2 h-2 rounded-full ${ts.dot}"></span>${c.type}
+        </span>
+        <span class="px-3 py-1 rounded-lg text-xs font-medium bg-night-800 border border-white/10 text-slate-300">${c.pages} หน้า/ใบ</span>
+      </div>
+
+      <!-- Creator -->
+      <div class="flex items-center gap-3 mt-5 bg-night-800/60 rounded-xl p-3 border border-white/5">
+        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shrink-0">${initial}</div>
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-slate-500">สร้างโดย</p>
+          <p class="text-sm font-semibold text-white">${esc(c.creator)}</p>
+        </div>
+        <span class="ml-auto text-[10px] px-2 py-1 rounded-lg bg-violet-500/15 text-violet-300 border border-violet-400/20 font-medium">🎓 นักศึกษาผู้สร้าง</span>
+      </div>
+
+      <!-- Description -->
+      <div class="mt-4 bg-night-800/60 rounded-xl p-4 border border-white/5">
+        <p class="text-[10px] uppercase tracking-wider text-slate-500 mb-1.5">จุดประสงค์การเรียนรู้</p>
+        <p class="text-sm text-slate-300 leading-relaxed">${esc(c.desc || '—')}</p>
+      </div>
+
+      <dl class="grid grid-cols-2 gap-3 mt-4 text-sm">
+        <div class="bg-night-800/60 rounded-xl p-3 border border-white/5">
+          <dt class="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">สต็อกคงเหลือ</dt>
+          <dd class="font-medium ${out ? 'text-red-400' : 'text-emerald-400'}">${out ? 'หมดชั่วคราว' : c.stock + ' ชุด'}</dd>
+        </div>
+        <div class="bg-night-800/60 rounded-xl p-3 border border-white/5">
+          <dt class="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">ราคา</dt>
+          <dd class="font-bold text-lg ${free ? 'text-emerald-400' : 'text-amber-300'}">${fmtPrice(c.price)}</dd>
+        </div>
+      </dl>
+
+      <div class="mt-auto pt-6">
+        <a href="https://line.me/R/ti/p/~${LINE_ID}" target="_blank" rel="noopener"
+           class="flex items-center justify-center gap-2 w-full bg-[#06c755] hover:bg-[#05b34c] text-white font-bold rounded-xl py-3.5 transition shadow-lg shadow-[#06c755]/20 ${out ? 'opacity-50 pointer-events-none' : ''}">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 5.64 2 10.13c0 4.03 3.55 7.4 8.35 8.05.33.07.77.22.88.5.1.26.07.66.03.92l-.14.86c-.04.26-.2 1.01.88.55 1.08-.46 5.84-3.44 7.97-5.89C21.44 13.4 22 11.85 22 10.13 22 5.64 17.52 2 12 2z"/></svg>
+          ${free ? 'ขอรับการ์ดฟรีผ่าน Line' : 'ติดต่อสั่งซื้อผ่าน Line'}
+        </a>
+        ${out ? '<p class="text-center text-xs text-red-400 mt-2">สินค้าหมดชั่วคราว — แจ้งรับแจ้งเตือนได้ทาง Line</p>' : ''}
+      </div>
+    </div>`;
+  document.getElementById('detailModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeDetail() {
+  document.getElementById('detailModal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+/* ================= ADMIN ================= */
+function openAdmin() {
+  document.getElementById('adminModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeAdmin() {
+  document.getElementById('adminModal').classList.add('hidden');
+  document.body.style.overflow = '';
+  document.getElementById('adminForm').reset();
+}
+
+function saveCard(e) {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const card = {
+    id: Date.now(),
+    name: f.get('name').trim(),
+    subject: f.get('subject'),
+    grade: f.get('grade'),
+    type: f.get('type'),
+    creator: f.get('creator').trim(),
+    pages: Math.max(1, Number(f.get('pages') || 1)),
+    price: Math.max(0, Number(f.get('price') || 0)),
+    stock: Math.max(0, Number(f.get('stock') || 0)),
+    image: (f.get('image') || '').trim(),
+    desc: (f.get('desc') || '').trim(),
+    custom: true,
+  };
+  cards.push(card);
+  saveCustomCards(cards.filter(c => c.custom));
+  closeAdmin();
+  render();
+  showToast(`ลงการ์ด "${card.name}" เรียบร้อยแล้ว 🎉`);
+}
+
+/* ================= TOAST ================= */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.remove('hidden');
+  t.classList.add('toast-in');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add('hidden'), 2600);
+}
+
+/* ================= KEYBOARD ================= */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeDetail(); closeAdmin(); }
+});
+
+/* ================= INIT ================= */
+render();
+</script>
+</body>
+</html>
